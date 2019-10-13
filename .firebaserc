@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "salon-clife"
+  },
+  "targets": {
+    "salon-clife": {
+      "hosting": {
+        "chat": [
+          "chatengine"
+        ]
+      }
+    }
+  }
+}

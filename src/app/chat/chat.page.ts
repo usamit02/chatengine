@@ -26,20 +26,29 @@ export class ChatPage implements OnInit {
   newchatSb: Subscription; chatSb: Subscription;
   height: number;
   pf: string;
-
+  sendable: boolean = false;
   constructor(private readonly db: AngularFirestore, private platform: Platform) { }
 
   ngOnInit() {
-    this.cursor = new Date("2018/1/1 0:0:0")
+    this.cursor = new Date("2019/9/19 15:0:0");
+    this.pf = this.platform.is("mobile") ? "mobile," : "";
+    this.pf += this.platform.is("mobileweb") ? "mobileweb," : "";
+    this.pf += this.platform.is("tablet") ? "tablet," : "";
+    this.pf += this.platform.is("android") ? "android," : "";
+    this.pf += this.platform.is("ios") ? "ios," : "";
   }
   ngAfterViewInit() {
     this.chatInit(2);
   }
   tinyfocus() {
-    console.log("html focus");
+    setTimeout(() => {
+      this.height = this.platform.height();
+    }, (1000));
   }
   tinyblur() {
-    console.log("html blur");
+    setTimeout(() => {
+      this.height = this.platform.height();
+    }, (1000));
   }
   chatInit(rid: number) {
     this.chats = []; this.Y = 0; this.newUpds = []; this.loadUpd = new Date();
@@ -49,13 +58,11 @@ export class ChatPage implements OnInit {
     this.newchatSb = this.dbcon.collection('chat', ref => ref.where('upd', '>', this.loadUpd)).stateChanges(['added']).
       subscribe(action => {//チャットロード以降の書き込み 
         let chat = action[0].payload.doc.data();
-        let sb = this.dbcon.collection('chat', ref => ref.where('upd', "<", chat.upd).orderBy('upd', 'desc').
-          limit(1)).get().subscribe(query => {//書き込み直前のチャットを取得
-            sb.unsubscribe();
+        this.dbcon.collection('chat', ref => ref.where('upd', "<", chat.upd).orderBy('upd', 'desc').
+          limit(1)).get().toPromise().then(query => {//書き込み直前のチャットを取得
             if (query.docs.length) {//初回書き込みでない
               if (query.docs[0].data().upd.toDate().getTime() === this.chats[this.chats.length - 1].upd.toDate().getTime()) {//読込済最新チャットの次の投稿
-                let sb = this.chatItems.changes.subscribe(t => {//this.chats.push(chat)の結果が描写後に発火
-                  sb.unsubscribe();
+                this.chatItems.changes.toPromise().then(t => {//this.chats.push(chat)の結果が描写後に発火
                   let chatDiv = <HTMLDivElement>document.getElementById('chat' + (this.chats.length - 1).toString());//新規チャット
                   if (this.Y + this.H > chatDiv.offsetTop) {
                     setTimeout(() => { this.content.scrollToBottom(300); });
@@ -75,6 +82,7 @@ export class ChatPage implements OnInit {
       });
   }
   chatLoad(e, direction, cursor?: Date) {
+    const LIMIT: number = 10; let db; let docs = []; let docs1 = []; let docs2 = [];
     if (!e) {
       this.loading = true;
     } else if (this.loading) {
@@ -84,7 +92,6 @@ export class ChatPage implements OnInit {
     }
     let infinate = e ? "infinate" : "init";
     console.log("chatload:" + infinate + " " + direction + " " + cursor);
-    let db;
     if (!cursor) {
       if (this.chats.length) {
         cursor = direction === 'top' ? this.chats[0].upd.toDate() : this.chats[this.chats.length - 1].upd.toDate();
@@ -93,21 +100,41 @@ export class ChatPage implements OnInit {
       }
     }
     if (direction === 'top') {
-      db = this.dbcon.collection('chat', ref => ref.where('upd', "<", cursor).orderBy('upd', 'desc').limit(20));//並び替えた後limitされるのでascはダメ
+      db = this.dbcon.collection('chat', ref => ref.where('upd', "<", cursor).orderBy('upd', 'desc').limit(LIMIT));//並び替えた後limitされるのでascはダメ
     } else {
-      db = this.dbcon.collection('chat', ref => ref.where('upd', ">", cursor).where('upd', '<', this.loadUpd).
-        orderBy('upd', 'asc').limit(20));
+      db = this.dbcon.collection('chat', ref => ref.where('upd', ">", cursor).where('upd', '<', this.loadUpd).orderBy('upd', 'asc').limit(LIMIT));
     }
-    let sb = db.get().subscribe(query => {
-      sb.unsubscribe();
-      let docs1 = docsPush(query, this);
-      let limit: number = direction === 'btm' && !this.chats.length && docs1.length < 20 ? 20 - docs1.length : 0;
-      if (!limit) { limit = 1; cursor = new Date("1/1/1900"); }
-      db = this.dbcon.collection('chat', ref => ref.where('upd', "<=", cursor).orderBy('upd', 'desc').limit(limit));
-      sb = db.get().subscribe(query => {
-        sb.unsubscribe();
-        let docs2 = docsPush(query, this);
-        let docs = docs2.reverse().concat(docs1);
+    function chatRead1(that) {
+      return new Promise((resolve, reject) => {
+        db.get().toPromise().then(query => {
+          docs1 = docsPush(query, that);
+          let limit: number = direction === 'btm' && !that.chats.length && docs1.length < LIMIT ? LIMIT - docs1.length : 0;
+          db = limit ? that.dbcon.collection('chat', ref => ref.where('upd', "<=", cursor).orderBy('upd', 'desc').limit(limit)) : null;
+          resolve();
+        });
+      });
+    }
+    function chatRead2(that) {
+      return new Promise((resolve, reject) => {
+        if (db) {
+          db.get().toPromise().then(query => {
+            resolve(query);
+          });
+        } else {
+          resolve();
+        }
+      });
+    }
+    Promise.resolve(this)
+      .then(chatRead1)
+      .then(chatRead2)
+      .then(query => {
+        if (query) {
+          docs2 = docsPush(query, this);
+          docs = docs2.reverse().concat(docs1);
+        } else {
+          docs = docs1;
+        }
         if (e) {//infinatescrollからの場合、スピナーを止める
           e.target.complete();
           if (!docs.length) e.target.disabled = true;//読み込むchatがなかったら以降infinatescroll無効
@@ -143,11 +170,11 @@ export class ChatPage implements OnInit {
             scrollFin(this);
           }
           if (direction === 'top') {
-            if (docs1.length < 20) { this.top.disabled = true; }
+            if (docs1.length < LIMIT) { this.top.disabled = true; }
             this.chats.unshift(...docs1.reverse());
           } else {
             this.chats.push(...docs);
-            if (docs.length < 20) {
+            if (docs.length < LIMIT) {
               this.btm.disabled = true;
             }
           }
@@ -155,15 +182,14 @@ export class ChatPage implements OnInit {
         } else {//読み込むchatがない
 
         }
-        if (this.chats.length < 20) {
+        if (this.chats.length < LIMIT) {
           this.top.disabled = true;
           this.btm.disabled = true;
           console.log("out of chats length :" + this.chats.length);
         }
       });
-    });
     function docsPush(query, that) {//firestoreの返り値を配列へ、同時に既読位置とツイッターがあるか記録
-      let docs = []
+      let docs = [];
       query.forEach(doc => {
         let d = doc.data();
         if (d.upd.toDate().getTime() <= new Date().getTime() && !that.readed) {
@@ -191,5 +217,8 @@ export class ChatPage implements OnInit {
           }
         }
       });
+  }
+  send() {
+
   }
 }
