@@ -62,14 +62,15 @@ export class ChatPage implements OnInit {
           limit(1)).get().toPromise().then(query => {//書き込み直前のチャットを取得
             if (query.docs.length) {//初回書き込みでない
               if (query.docs[0].data().upd.toDate().getTime() === this.chats[this.chats.length - 1].upd.toDate().getTime()) {//読込済最新チャットの次の投稿
-                this.chatItems.changes.toPromise().then(t => {//this.chats.push(chat)の結果が描写後に発火
+                let sb = this.chatItems.changes.subscribe(t => {//this.chats.push(chat)の結果が描写後に発火
+                  sb.unsubscribe();
                   let chatDiv = <HTMLDivElement>document.getElementById('chat' + (this.chats.length - 1).toString());//新規チャット
                   if (this.Y + this.H > chatDiv.offsetTop) {
                     setTimeout(() => { this.content.scrollToBottom(300); });
                   } else {//画面上に最近のチャットが表示されていない
                     this.newUpds.push(chat.upd.toDate());//新着メッセージを追加
                   }
-                });
+                }, () => { }, () => { sb.unsubscribe(); });
                 this.chats.push(chat);//チャットが連続していれば書き込みを足す
                 this.chatChange();
               } else {//読込済最新チャットの次のチャットはない                
@@ -104,37 +105,10 @@ export class ChatPage implements OnInit {
     } else {
       db = this.dbcon.collection('chat', ref => ref.where('upd', ">", cursor).where('upd', '<', this.loadUpd).orderBy('upd', 'asc').limit(LIMIT));
     }
-    function chatRead1(that) {
-      return new Promise((resolve, reject) => {
-        db.get().toPromise().then(query => {
-          docs1 = docsPush(query, that);
-          let limit: number = direction === 'btm' && !that.chats.length && docs1.length < LIMIT ? LIMIT - docs1.length : 0;
-          db = limit ? that.dbcon.collection('chat', ref => ref.where('upd', "<=", cursor).orderBy('upd', 'desc').limit(limit)) : null;
-          resolve();
-        });
-      });
-    }
-    function chatRead2(that) {
-      return new Promise((resolve, reject) => {
-        if (db) {
-          db.get().toPromise().then(query => {
-            resolve(query);
-          });
-        } else {
-          resolve();
-        }
-      });
-    }
     Promise.resolve(this)
-      .then(chatRead1)
-      .then(chatRead2)
-      .then(query => {
-        if (query) {
-          docs2 = docsPush(query, this);
-          docs = docs2.reverse().concat(docs1);
-        } else {
-          docs = docs1;
-        }
+      .then(docsRead1)
+      .then(docsRead2)
+      .then(() => {
         if (e) {//infinatescrollからの場合、スピナーを止める
           e.target.complete();
           if (!docs.length) e.target.disabled = true;//読み込むchatがなかったら以降infinatescroll無効
@@ -165,7 +139,7 @@ export class ChatPage implements OnInit {
                   this.content.scrollByPoint(0, 20, 300);
                 }
               }
-            });
+            }, () => { }, () => { sb.unsubscribe(); });
           } else {
             scrollFin(this);
           }
@@ -187,7 +161,37 @@ export class ChatPage implements OnInit {
           this.btm.disabled = true;
           console.log("out of chats length :" + this.chats.length);
         }
+      }).catch((err) => {
+        alert("チャットデーターベースの読込に失敗しました。\r\n" + err.message);
       });
+    function docsRead1(that) {
+      return new Promise((resolve, reject) => {
+        db.get().toPromise().then(query => {
+          docs1 = docsPush(query, that);
+          let limit: number = direction === 'btm' && !that.chats.length && docs1.length < LIMIT ? LIMIT - docs1.length : 0;
+          db = limit ? that.dbcon.collection('chat', ref => ref.where('upd', "<=", cursor).orderBy('upd', 'desc').limit(limit)) : null;
+          resolve();
+        }).catch((err) => {
+          reject(err);
+        });
+      });
+    }
+    function docsRead2(that) {
+      return new Promise((resolve, reject) => {
+        if (db) {
+          db.get().toPromise().then(query => {
+            docs2 = docsPush(query, that);
+            docs = docs2.reverse().concat(docs1);
+            resolve();
+          }).catch((err) => {
+            reject(err);
+          });
+        } else {
+          docs = docs1;
+          resolve();
+        }
+      });
+    }
     function docsPush(query, that) {//firestoreの返り値を配列へ、同時に既読位置とツイッターがあるか記録
       let docs = [];
       query.forEach(doc => {
