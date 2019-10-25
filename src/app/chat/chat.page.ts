@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { IonContent, IonInfiniteScroll, Platform } from '@ionic/angular';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/firestore';
 import { Subscription } from 'rxjs';
@@ -8,10 +8,10 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./chat.page.scss'],
 })
 export class ChatPage implements OnInit {
-  @ViewChild('chatscontent', { static: false }) content: IonContent;
+  @ViewChild('chatscontent', { read: ElementRef, static: false }) content: ElementRef;
   @ViewChild('top', { static: false }) top: IonInfiniteScroll; @ViewChild('btm', { static: false }) btm: IonInfiniteScroll;
-  @ViewChildren('chatItems') chatItems: QueryList<any>;
-  @ViewChildren('tiny') tiny: HTMLDivElement;
+  @ViewChildren('chatDivs', { read: ElementRef }) chatDivs: QueryList<ElementRef>;
+  @ViewChild('talk', { read: ElementRef, static: false }) talk: ElementRef;//チャット投稿欄
   chats: Array<any> = [];//チャットデータ [0]=古い、[length-1]=最新 <div id="chatX"
   loading: boolean = false;//読み込み時の自動スクロールにion-infinate-scrollが反応するのを止める。
   dbcon: AngularFirestoreDocument<{}>;//firestore接続バッファ
@@ -62,11 +62,11 @@ export class ChatPage implements OnInit {
           limit(1)).get().toPromise().then(query => {//書き込み直前のチャットを取得
             if (query.docs.length) {//初回書き込みでない
               if (query.docs[0].data().upd.toDate().getTime() === this.chats[this.chats.length - 1].upd.toDate().getTime()) {//読込済最新チャットの次の投稿
-                let sb = this.chatItems.changes.subscribe(t => {//this.chats.push(chat)の結果が描写後に発火
+                let sb = this.chatDivs.changes.subscribe(t => {//this.chats.push(chat)の結果が描写後に発火
                   sb.unsubscribe();
-                  let chatDiv = <HTMLDivElement>document.getElementById('chat' + (this.chats.length - 1).toString());//新規チャット
+                  let chatDiv: HTMLDivElement = this.chatDivs.toArray()[this.chats.length - 1].nativeElement;//新規チャット
                   if (this.Y + this.H > chatDiv.offsetTop) {
-                    setTimeout(() => { this.content.scrollToBottom(300); });
+                    setTimeout(() => { this.content.nativeElement.scrollToBottom(300); });
                   } else {//画面上に最近のチャットが表示されていない
                     this.newUpds.push(chat.upd.toDate());//新着メッセージを追加
                   }
@@ -115,28 +115,26 @@ export class ChatPage implements OnInit {
         }
         if (this.chats.length || docs.length) {
           if (!this.chats.length) {//新規読込
-            let sb = this.chatItems.changes.subscribe(() => {//チャット再描写後発火
+            let sb = this.chatDivs.changes.subscribe(() => {//チャット再描写後発火
               sb.unsubscribe();
               if (direction === "top" || !docs1.length) {
-                setTimeout(() => { this.content.scrollToBottom().then(() => { scrollFin(this); }); }); //this.data.scroll("btm");
+                setTimeout(() => { this.content.nativeElement.scrollToBottom().then(() => { scrollFin(this); }); }); //this.data.scroll("btm");
               } else {
                 if (docs2.length) {
-                  let content = <any>document.getElementById('chatscontent');
-                  let chatDivs = <any>document.getElementsByClassName('chat');
+                  let chatDivs = this.chatDivs.toArray();
                   let cursorTop: number = 0; let cursorHeight: number = 0;
                   for (let i = 0; i < chatDivs.length; i++) {
                     if (this.chats[i].upd.toDate().getTime() >= cursor.getTime()) {
-                      cursorTop = chatDivs[i].offsetTop; cursorHeight = chatDivs[i].offsetHeight; break;
+                      cursorTop = chatDivs[i].nativeElement.offsetTop; cursorHeight = chatDivs[i].nativeElement.offsetHeight; break;
                     }
                   }
-                  if (chatDivs[0].offsetTop + chatDivs[0].offsetHeight - cursorTop > content.scrollHeight) {
-                    setTimeout(() => { this.content.scrollToTop().then(() => { scrollFin(this); }); });
+                  if (chatDivs[0].nativeElement.offsetTop + chatDivs[0].nativeElement.offsetHeight - cursorTop > this.content.nativeElement.scrollHeight) {
+                    setTimeout(() => { this.content.nativeElement.scrollToTop().then(() => { scrollFin(this); }); });
                   } else {
-                    setTimeout(() => { this.content.scrollToBottom().then(() => { scrollFin(this); }); });/*this.content.getScrollElement().then(content => {content.scrollTop = content.scrollHeight;});*/
+                    setTimeout(() => { this.content.nativeElement.scrollToBottom().then(() => { scrollFin(this); }); });/*this.content.getScrollElement().then(content => {content.scrollTop = content.scrollHeight;});*/
                   }
                 } else {
-                  this.loading = false;
-                  this.content.scrollByPoint(0, 20, 300);
+                  this.content.nativeElement.scrollByPoint(0, 20, 300).then(() => { scrollFin(this); });;
                 }
               }
             }, () => { }, () => { sb.unsubscribe(); });
@@ -170,7 +168,7 @@ export class ChatPage implements OnInit {
           docs1 = docsPush(query, that);
           let limit: number = direction === 'btm' && !that.chats.length && docs1.length < LIMIT ? LIMIT - docs1.length : 0;
           db = limit ? that.dbcon.collection('chat', ref => ref.where('upd', "<=", cursor).orderBy('upd', 'desc').limit(limit)) : null;
-          resolve();
+          resolve(that);
         }).catch((err) => {
           reject(err);
         });

@@ -9,13 +9,13 @@
     </ion-infinite-scroll-content>
   </ion-infinite-scroll>
   <ion-list>
-    <ion-item class="chat" #chatItems *ngFor="let chat of chats;index as i">
+    <ion-item *ngFor="let chat of chats;index as i">
       <div>
         <ion-avatar>
           <ion-img [src]="chat.avatar"></ion-img>
         </ion-avatar>
       </div>
-      <div [id]="'chat' + i" style="width:100%;">
+      <div #chatDivs style="width:100%;">
         <span class="chatna">{{chat.na}}</span>
         <span class="chatdate"> {{chat.upd.toDate()}}</span>
         <div class="chattxt" [innerHtml]="chat.txt"></div>
@@ -30,7 +30,7 @@
 <ion-footer id="footer">
   <ion-toolbar>
     <ion-item>
-      <div class="tiny" contenteditable="true"></div>
+      <div class="talk" contenteditable="true"></div>
       <ion-button [disabled]="!sendable" (click)="send()">
         <ion-icon name="send"></ion-icon>
       </ion-button>
