@@ -1,6 +1,7 @@
 {
   "projects": {
-    "default": "salon-clife"
+    "default": "salon-clife",
+    "sexual": "sexualreport"
   },
   "targets": {
     "salon-clife": {

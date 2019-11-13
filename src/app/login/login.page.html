@@ -1,0 +1,71 @@
+<ion-content padding>
+  <form #formMail="ngForm" [formGroup]="mailForm">
+    <ion-item>
+      <div slot="start">
+        <ion-label position="floating">
+          <ion-icon name="mail"></ion-icon>
+          メールアドレス
+        </ion-label>
+        <ion-input [formControl]="email" name="email"></ion-input>
+      </div>
+      <ion-button slot="end" [disabled]="!email.valid" (click)="login('email')">
+        メールを送信
+      </ion-button>
+    </ion-item>
+    <span *ngIf="email.errors?.email && email.dirty" class="errmsg">正しいメールアドレスを入力してください</span>
+    <ion-item lines="none" style="text-align:center">
+      <ion-label>または</ion-label>
+    </ion-item>
+  </form>
+  <form #formPhone="ngForm" [formGroup]="phoneForm">
+    <ion-item>
+      <div slot="start">
+        <ion-label position="floating">
+          <ion-icon name="call"></ion-icon>
+          電話番号
+        </ion-label>
+        <ion-input [formControl]="phone" name="phone"></ion-input>
+      </div>
+      <div id="recaptcha-container"></div>
+      <ion-button slot="end" [disabled]="!phone.valid || !recaptchaOK " (click)="login('phone')">
+        SMSを送信
+      </ion-button>
+    </ion-item>
+    <span *ngIf="phone.errors?.pattern && phone.dirty" class="errmsg">半角数字9-11桁または00-0000-0000などの形式で入力してください</span>
+  </form>
+  <ion-item lines="none" text-center align-items-center>
+    <ion-label>または</ion-label>
+  </ion-item>
+  <ion-item lines="none" text-center align-items-center>
+    <ion-button color="twitter" (click)="snsLogin('twitter')">
+      <ion-icon name="logo-twitter"></ion-icon>twitterアカウントでログイン
+    </ion-button>
+  </ion-item>
+  <ion-item lines="none" text-center align-items-center>
+    <ion-button color="google" (click)="snsLogin('google')">
+      <ion-icon name="logo-google"></ion-icon>googleアカウントでログイン
+    </ion-button>
+  </ion-item>
+  <ion-item lines="none" text-center align-items-center>
+    <ion-button color="facebook" (click)="snsLogin('facebook')">
+      <ion-icon name="logo-facebook"></ion-icon>Facebookアカウントでログイン
+    </ion-button>
+  </ion-item>
+  <ion-item lines="none" text-center align-items-center>
+    <ion-label>または</ion-label>
+  </ion-item>
+  <ion-item lines="none" text-center align-items-center>
+    <ion-button color="medium" (click)="login('anonymous')">
+      <ion-icon name="person"></ion-icon>匿名でログイン
+    </ion-button>
+  </ion-item>
+</ion-content>
+<!--
+
+ <ion-item *ngIf="windowRef.confirmationResult">
+      <label position="floating">確認コード</label>
+      <ion-input type="text" name="code" [(ngModel)]="verificationCode"></ion-input>
+      <ion-button (click)="verifySmsCode()">検証</ion-button>
+    </ion-item>
+
+-->

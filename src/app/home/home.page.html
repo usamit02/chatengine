@@ -7,7 +7,13 @@
 </ion-header>
 
 <ion-content>
-  <div class="ion-padding">
-  </div>
-  <ion-button (click)="downCSV()">ダウンロード</ion-button>
+  <ng-container *ngIf="user.$|async as u">
+    <ng-container *ngIf="u.id else noUser">
+      <span>{{u.na}}</span>
+      <ion-button (click)="logout()">ログアウト</ion-button>
+    </ng-container>
+    <ng-template #noUser>
+      <ion-button (click)="login()">ログイン</ion-button>
+    </ng-template>
+  </ng-container>
 </ion-content>
