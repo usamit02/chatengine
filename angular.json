@@ -31,7 +31,7 @@
                 "output": "./svg"
               },
               "src/manifest.json",
-              "src/firebase-messaging-sw.js",
+              "src/firebase-messaging-sw.js"
             ],
             "styles": [
               {

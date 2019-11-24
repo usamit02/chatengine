@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, ViewChildren, QueryList, ElementRef } fro
 import { IonContent, IonInfiniteScroll, Platform } from '@ionic/angular';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/firestore';
 import { Subscription } from 'rxjs';
+import { take } from 'rxjs/operators';
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.page.html',
@@ -62,15 +63,14 @@ export class ChatPage implements OnInit {
           limit(1)).get().toPromise().then(query => {//書き込み直前のチャットを取得
             if (query.docs.length) {//初回書き込みでない
               if (query.docs[0].data().upd.toDate().getTime() === this.chats[this.chats.length - 1].upd.toDate().getTime()) {//読込済最新チャットの次の投稿
-                let sb = this.chatDivs.changes.subscribe(t => {//this.chats.push(chat)の結果が描写後に発火
-                  sb.unsubscribe();
+                this.chatDivs.changes.pipe(take(1)).toPromise().then(t => {//this.chats.push(chat)の結果が描写後に発火
                   let chatDiv: HTMLDivElement = this.chatDivs.toArray()[this.chats.length - 1].nativeElement;//新規チャット
                   if (this.Y + this.H > chatDiv.offsetTop) {
                     setTimeout(() => { this.content.nativeElement.scrollToBottom(300); });
                   } else {//画面上に最近のチャットが表示されていない
                     this.newUpds.push(chat.upd.toDate());//新着メッセージを追加
                   }
-                }, () => { }, () => { sb.unsubscribe(); });
+                });
                 this.chats.push(chat);//チャットが連続していれば書き込みを足す
                 this.chatChange();
               } else {//読込済最新チャットの次のチャットはない                
@@ -115,8 +115,7 @@ export class ChatPage implements OnInit {
         }
         if (this.chats.length || docs.length) {
           if (!this.chats.length) {//新規読込
-            let sb = this.chatDivs.changes.subscribe(() => {//チャット再描写後発火
-              sb.unsubscribe();
+            this.chatDivs.changes.pipe(take(1)).toPromise().then(() => {//チャット再描写後発火
               if (direction === "top" || !docs1.length) {
                 setTimeout(() => { this.content.nativeElement.scrollToBottom().then(() => { scrollFin(this); }); }); //this.data.scroll("btm");
               } else {
@@ -137,7 +136,7 @@ export class ChatPage implements OnInit {
                   this.content.nativeElement.scrollByPoint(0, 20, 300).then(() => { scrollFin(this); });;
                 }
               }
-            }, () => { }, () => { sb.unsubscribe(); });
+            });
           } else {
             scrollFin(this);
           }

@@ -11,10 +11,7 @@ import 'firebase/messaging';
 export class MessagingService {
   messaging = firebase.messaging();
   currentMessage = new BehaviorSubject(null);
-  constructor(
-    private db: AngularFireDatabase,
-    private afAuth: AngularFireAuth
-  ) {
+  constructor(private db: AngularFireDatabase, private afAuth: AngularFireAuth) {
     // Add the public key generated from the console here.
     this.messaging.usePublicVapidKey(
       'BJ1mTbdu3wUjcNb_itFbupqqnmezzn5u407BSAH5koV7urFTkZ-ggf3FTmhRMYyPdoeiE85MNu4NsaTEbHKbS-A' // <- ここに、上記で生成した鍵ペアを貼りつけてください
