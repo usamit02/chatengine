@@ -41,9 +41,9 @@ export class LoginPage implements OnInit, OnDestroy {
         this.ui.pop(`ようこそ${user.na}さん`);
         if (this.userSb) {
           this.userSb.unsubscribe();
-          //this.router.navigate(['home']);
+          this.router.navigate(['/chat']);
         } else {
-          //this.location.back();
+          this.location.back();
         }
       }
     });

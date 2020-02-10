@@ -15,5 +15,11 @@
     <ng-template #noUser>
       <ion-button (click)="login()">ログイン</ion-button>
     </ng-template>
+    <ion-item *ngFor="let user of users">
+      {{user.id}}
+      <ion-button (click)="push(u,user)">プッシュ通知</ion-button>
+    </ion-item>
   </ng-container>
+  <ion-item>許可取得<ion-button (click)="permission()">取得</ion-button>
+  </ion-item>
 </ion-content>

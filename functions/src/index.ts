@@ -5,26 +5,21 @@ import * as google from 'googleapis';
 
 admin.initializeApp();
 
-export const fcmSend = functions.database.ref('/chat/{id}').onCreate((snapshot, context) => {
+export const fcmSend = functions.database.ref('/chat/{user}/{key}').onCreate((snapshot, context) => {
   const doc = snapshot.val();
   const payload = {
     notification: {
       title: 'セクシャルレポートより', // Pushメッセージのタイトル
-      body: doc.id + 'が登録されました 🎉', // Pushメッセージ本文
+      body: context.params.user + 'よりpushされました 🎉', // Pushメッセージ本文
       clickAction: '', // Push通知をタップした時に、飛ばすURLを指定
       icon: '', // Push通知で使うロゴ
     },
   };
 
-  admin.database().ref('/fcmTokens/').once('value').then((token) => {
-    const tokenList = token.val() || '';
-    Object.keys(tokenList).forEach(function (key, index) {
-      console.log(tokenList[key]);
-      admin.messaging().sendToDevice(tokenList[key], payload).then((res) => {
-        console.log('Sent Successfully', res);
-      }).catch((err) => {
-        console.log(err);
-      });
+  admin.database().ref(`/fcmTokens/${doc.uid}`).once('value').then(snap => {
+    const token = snap.val();
+    admin.messaging().sendToDevice(token, payload).then((res) => {
+      console.log('Sent Successfully', res.results);
     });
   }).catch((err) => {
     console.log(err);

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { AngularFireAuth } from '@angular/fire/auth';
-import { BehaviorSubject } from 'rxjs';
 import * as firebase from 'firebase';
 import 'firebase/messaging';
 
@@ -9,39 +8,47 @@ import 'firebase/messaging';
   providedIn: 'root',
 })
 export class MessagingService {
-  messaging = firebase.messaging();
-  currentMessage = new BehaviorSubject(null);
+  private messaging = firebase.messaging();
   constructor(private db: AngularFireDatabase, private afAuth: AngularFireAuth) {
-    // Add the public key generated from the console here.
-    this.messaging.usePublicVapidKey(
-      'BJ1mTbdu3wUjcNb_itFbupqqnmezzn5u407BSAH5koV7urFTkZ-ggf3FTmhRMYyPdoeiE85MNu4NsaTEbHKbS-A' // <- ここに、上記で生成した鍵ペアを貼りつけてください
-    );
-  }
-  updateToken(token) {
-    this.afAuth.authState.subscribe((user) => {
-      if (!user) {
-        return;
-      }
 
-      const data = { [user.uid]: token };
-      this.db.object('fcmTokens/').update(data);
+  }
+  private updateToken(token) {
+    this.afAuth.authState.subscribe((user) => {
+      if (user) {
+        this.db.object('fcmTokens/').update({ [user.uid]: token });
+      }
     });
   }
   getPermission() {
-    this.messaging.requestPermission().then(() => {
-      console.log('Notification permission granted.');
-      return this.messaging.getToken();
-    }).then((token) => {
-      console.log(token);
-      this.updateToken(token);
+    Notification.requestPermission().then(permission => {
+      if (permission === 'default' || permission === 'granted') {
+        this.messaging.getToken().then(token => {
+          this.updateToken(token);
+        });
+      } else if (permission === 'denied') {
+        alert(`通知はブロックに設定されています。ブロックを解除してから再操作してください。`);
+      } else {
+        throw new Error('permisson undefined');
+      }
     }).catch((err) => {
-      console.log('Unable to get permission to notify.', err);
+      alert(`通知パーミッションの取得に失敗しました。${err}`);
     });
   }
-  receiveMessage() {
-    this.messaging.onMessage((payload) => {
-      console.log('Message received. ', payload);
-      this.currentMessage.next(payload);
+  init() {
+    this.messaging.usePublicVapidKey('BORvt0d053IW4RTBKtUgxtDqDc0sClk4P-fsLf4zRk_oSRCdoAThlmeKwLdzSLASfGlIb6jqCzfRKEWKXAyKBjU');
+    this.messaging.onMessage(payload => {
+      console.log('メッセージング受信');
+      const title = 'セクシャルレポート';
+      const options = {
+        body: payload.body,
+        icon: payload.icon
+      };
+      const notification = new Notification(title, options);
+    });
+    this.messaging.onTokenRefresh(() => {
+      this.messaging.getToken().then(token => {
+        this.updateToken(token);
+      });
     });
   }
 }

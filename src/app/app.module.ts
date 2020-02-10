@@ -12,7 +12,7 @@ import { AngularFireModule } from '@angular/fire';
 import { AngularFireAuthModule } from '@angular/fire/auth';
 
 import { AngularFireDatabaseModule } from '@angular/fire/database';
-//import { AngularFirestoreModule } from '@angular/fire/firestore';
+import { AngularFirestoreModule } from '@angular/fire/firestore';
 import { MessagingService } from './service/messaging.service';
 @NgModule({
   declarations: [AppComponent],
@@ -22,7 +22,7 @@ import { MessagingService } from './service/messaging.service';
 
     AngularFireModule.initializeApp(firebaseConfig),
     AngularFireAuthModule,
-    //AngularFirestoreModule,
+    AngularFirestoreModule,
     AngularFireDatabaseModule,
   ],
   providers: [

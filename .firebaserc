@@ -1,15 +1,5 @@
 {
   "projects": {
-    "default": "salon-clife",
-    "sexual": "sexualreport"
-  },
-  "targets": {
-    "salon-clife": {
-      "hosting": {
-        "chat": [
-          "chatengine"
-        ]
-      }
-    }
+    "default": "sexuallyreport"
   }
 }
