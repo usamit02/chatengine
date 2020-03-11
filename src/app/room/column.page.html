@@ -1,0 +1,70 @@
+<ion-header>
+  <ion-toolbar>
+    <div class="title">
+
+      <ion-title>コラム投稿</ion-title>
+
+    </div>
+  </ion-toolbar>
+</ion-header>
+<ion-content #content>
+  <form [formGroup]="columnForm">
+    <ion-grid>
+      <ion-row>
+        <ion-col #basic size-xs="12" size-sm="12" size-md="6" size-lg="6" size-xl="6">
+          <ion-item>
+            <ion-label position="floating">
+              タイトル<ion-text color="danger">*</ion-text>
+            </ion-label>
+            <ion-input required [formControl]="na" minlength="2" maxlength="30" placeholder="何とかについて"></ion-input>
+          </ion-item>
+          <span *ngIf="na.errors?.minlength||na.errors?.maxlength" class="errmsg">２文字以上３０文字以下で入力してください。</span>
+          <ion-item>
+            <ion-label position="floating">
+              タイトルかな
+            </ion-label>
+            <ion-input [formControl]="kana" minlength="2" maxlength="60" placeholder="なんとかについて"></ion-input>
+          </ion-item>
+          <span *ngIf="kana.errors?.minlength||kana.errors?.maxlength" class="errmsg">２文字以上６０文字以下で入力してください。</span>
+          <span *ngIf="kana.errors?.pattern && kana.dirty" class="errmsg">全角ひらがなで入力してください</span>
+          <ion-item>
+            <ion-label position="floating">場所</ion-label>{{place}}
+            <ion-input [formControl]="parent" style="display:none"></ion-input>
+            <ion-button slot="end" (click)="popTree()" fill="clear">
+              　 <ion-icon name="refresh-circle" slot="icon-only" color="warning"></ion-icon>
+            </ion-button>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="mail" color="secondary"></ion-icon>
+            <ion-label>コメント欄</ion-label>
+            <ion-toggle [formControl]="chat"></ion-toggle>
+            <ion-icon name="lock" color="tertiary"></ion-icon>
+            <ion-label>サポーター限定</ion-label>
+            <ion-toggle [formControl]="rest"></ion-toggle>
+          </ion-item>
+        </ion-col>
+        <ion-col size-xs="12" size-sm="12" size-md="6" size-lg="6" size-xl="6">
+          <ion-item>
+            <ion-label position="floating">
+              説明文
+            </ion-label>
+            <ion-textarea [formControl]="description" autoGrow="true" maxlength="300"></ion-textarea>
+          </ion-item>
+          <span *ngIf="description.errors?.minlength||description.errors?.maxlength"
+            class="errmsg">２文字以上３００文字以下で入力してください。</span>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </form>
+  <ion-title #essay class="Text">Essay</ion-title>
+  <ion-fab vertical="top" horizontal="end" slot="fixed">
+    <ion-fab-button *ngIf="currentY>basicY+50" (click)="scroll(basicY)" color="light" size="small">
+      Basic
+    </ion-fab-button>
+  </ion-fab>
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button *ngIf="currentY+contentH<essayY" (click)="scroll(essayY)" color="light" size="small">
+      Essay
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

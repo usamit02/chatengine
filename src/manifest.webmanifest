@@ -1,6 +1,6 @@
 {
-  "name": "notify-test",
-  "short_name": "notify",
+  "name": "app",
+  "short_name": "app",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
@@ -47,6 +47,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "gcm_sender_id": "103953800507"
+  ]
 }

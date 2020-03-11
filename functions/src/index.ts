@@ -70,3 +70,11 @@ export const fcmSend = functions.database.ref('/chat/{user}/{key}').onCreate((sn
     console.log("アクセストークンの取得に失敗しました。\r\n" + err.message);
   });
 });
+
+export const sitemap = functions.https.onRequest((req, res) => {
+  res.set('Content-Type', 'application/xml');
+  let html = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  html += `<url>\n<loc>https://clife.cf</loc>\n<lastmod></lastmod>\n</url>\n`;
+  res.set('Cache-Control', 'public, max-age=60, s-maxage=60');
+  res.status(200).send(html + "</urlset>");
+});

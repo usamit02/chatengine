@@ -4,6 +4,7 @@ import { IonicModule } from '@ionic/angular';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { LoginPage } from './login.page';
+import { PipeSharedModule } from '../pipe/shared.module';
 @NgModule({
   imports: [
     CommonModule,
@@ -16,6 +17,7 @@ import { LoginPage } from './login.page';
       }
     ]),
     ReactiveFormsModule,
+    PipeSharedModule,
   ],
   declarations: [LoginPage]
 })

@@ -7,6 +7,7 @@ import { IonicModule } from '@ionic/angular';
 
 import { ChatPage } from './chat.page';
 
+import { PipeSharedModule } from '../pipe/shared.module';
 const routes: Routes = [
   {
     path: '',
@@ -19,8 +20,9 @@ const routes: Routes = [
     CommonModule,
     FormsModule,
     IonicModule,
-    RouterModule.forChild(routes)
+    RouterModule.forChild(routes),
+    PipeSharedModule
   ],
   declarations: [ChatPage]
 })
-export class ChatPageModule {}
+export class ChatPageModule { }

@@ -16,7 +16,7 @@
         </ion-avatar>
       </div>
       <div #chatDivs style="width:100%;">
-        <span class="chatna">{{chat.na}}</span>
+        <span class="chatna">{{chat.na|safe}}</span>
         <span class="chatdate"> {{chat.upd.toDate()}}</span>
         <div class="chattxt" [innerHtml]="chat.txt"></div>
       </div>

@@ -1,0 +1,41 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-item lines="none">
+      <ion-button slot="start" (click)="modal.dismiss()" fill="clear">
+        　 <ion-icon name="close-circle" slot="icon-only" color="dark"></ion-icon>
+      </ion-button>
+      <ion-searchbar #filter placeholder="検索" (keyup)="tree.treeModel.filterNodes(filter.value)">
+      </ion-searchbar>
+      <ion-button [disabled]="" (click)="save()" slot="end" fill="clear">
+        <ion-icon name="checkmark" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-toolbar>
+</ion-header>
+<ion-content class="ion-padding">
+  <tree-root #tree [focused]="true" [nodes]="nodes" [options]="options">
+    <ng-template #treeNodeTemplate let-node="node">
+      <span *ngIf="node!==editNode;else editing" [class.ack]="node.data.ack<1"
+        [class.mine]="node.data.user===this.prop.user.id">{{node.data.na}}</span>
+      <ng-template #editing>
+        <input [ngModel]="node.data.na" autofocus (blur)="stopEdit()"
+          (keyup.enter)="node.data.na=$event.target.value;saveEdit()" (keyup.esc)="stopEdit()" />
+      </ng-template>
+    </ng-template>
+  </tree-root>
+  <div class="menu" *ngIf="contextMenu" [style.left.px]="contextMenu.x" [style.top.px]="contextMenu.y">
+    <h4>{{ contextMenu.node.data.na }}</h4>
+    <hr>
+    <ul>
+      <li (click)="copy()"><a>コピー</a></li>
+      <ng-container *ngIf="contextMenu.node.data.user===prop.user.id||prop.user.admin">
+        <li (click)="cut()"><a>切り取り</a></li>
+        <li (click)="paste()"><a [style.opacity]="canPaste() && 1 || 0.3">貼り付け</a></li>
+        <li class="master" (click)="add(tree)"><a>新規</a></li>
+        <li class="master" (click)="edit()"><a>変更</a></li>
+        <li class="master" (click)="del(tree)"><a>削除</a></li>
+      </ng-container>
+    </ul>
+  </div>
+
+</ion-content>
